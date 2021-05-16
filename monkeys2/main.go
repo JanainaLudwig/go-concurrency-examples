@@ -9,8 +9,8 @@ import (
 
 type Counter struct {
 	sync.Mutex
-	Limit int
-	Added int
+	MinMonkeysGenerated int
+	Added               int
 }
 
 func (c *Counter) Increment(val int) {
@@ -23,52 +23,55 @@ func (c *Counter) Finished() bool {
 	c.Lock()
 	defer c.Unlock()
 
-	return c.Added == c.Limit
+	return c.Added >= c.MinMonkeysGenerated
 }
 
-
 func main()  {
-	//limit := 50
-	//passed := 0
-
-	leftChannel := make(chan Monkey, 5)
-	rightChannel := make(chan Monkey, 5)
+	leftChannel := make(chan Monkey, 10)
+	rightChannel := make(chan Monkey, 10)
 
 	monkeysOnLeft := MonkeysList{}
 	monkeysOnRight := MonkeysList{}
 
 	counter := Counter{
-		Limit: 10,
+		MinMonkeysGenerated: 20,
 	}
 	bridge := Bridge{
-		TimeToCross: time.Second,
+		TimeToCross: 5 * time.Second,
+		Debug: false,
 	}
 
-	bridge.timer = *time.NewTimer(time.Duration(0))
-
-	log.Println("Total: ", counter.Limit)
+	log.Println("Total: ", counter.MinMonkeysGenerated)
 
 	go generateMonkeys(leftChannel, 500)
-	go generateMonkeys(rightChannel, 1000)
+	go generateMonkeys(rightChannel, 300)
 
 	for {
 		select {
 		case monkey := <-leftChannel: // Randomly add monkeys to the left side
 			monkeysOnLeft.AddToList(monkey)
-			log.Println("l")
 			//log.Println("LEFT", len(monkeysOnLeft.GetList()))
 		case monkey := <-rightChannel: // Randomly add monkeys to the right side
-			log.Println("r")
 			monkeysOnRight.AddToList(monkey)
 			//log.Println("RIGHT", len(monkeysOnRight.GetList()))
 		default:
 			if counter.Finished() {
-				log.Println("Finished after passing", counter.Limit, "monkeys")
+				log.Println("Finished after passing", counter.MinMonkeysGenerated, "monkeys")
 				return
 			}
 
 			waitingRight := len(monkeysOnRight.GetList())
 			waitingLeft := len(monkeysOnLeft.GetList())
+
+
+			if waitingRight > 0 {
+				passed := bridge.Pass(RIGHT)
+				if passed {
+					log.Println(waitingRight, "_ <- RIGHT")
+					monkeysOnRight.RemoveFromList(waitingRight)
+					counter.Increment(waitingRight)
+				}
+			}
 
 			if waitingLeft > 0 {
 				passed := bridge.Pass(LEFT)
@@ -77,17 +80,8 @@ func main()  {
 					monkeysOnLeft.RemoveFromList(waitingLeft)
 					counter.Increment(waitingLeft)
 				}
-				continue
 			}
 
-			if waitingRight > 0 {
-				passed := bridge.Pass(RIGHT)
-				if passed {
-					log.Println(waitingRight, "_ -> RIGHT")
-					monkeysOnRight.RemoveFromList(waitingRight)
-					counter.Increment(waitingRight)
-				}
-			}
 		}
 	}
 }
