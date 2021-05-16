@@ -27,15 +27,16 @@ func (c *Counter) Finished() bool {
 }
 
 func main()  {
-	wg := sync.WaitGroup{}
+	passings := sync.WaitGroup{}
 	leftChannel := make(chan Monkey, 5)
 	rightChannel := make(chan Monkey, 5)
+	quit := make(chan bool, 2)
 
 	monkeysOnLeft := MonkeysList{}
 	monkeysOnRight := MonkeysList{}
 
 	counter := Counter{
-		MinMonkeysGenerated: 30,
+		MinMonkeysGenerated: 20,
 	}
 	bridge := Bridge{
 		TimeToCross: 2 * time.Second,
@@ -44,8 +45,8 @@ func main()  {
 
 	log.Println("Total: ", counter.MinMonkeysGenerated)
 
-	go generateMonkeys(leftChannel, 500)
-	go generateMonkeys(rightChannel, 1000)
+	go generateMonkeys(leftChannel, 500, quit)
+	go generateMonkeys(rightChannel, 1000, quit)
 
 	for {
 		select {
@@ -55,24 +56,25 @@ func main()  {
 			monkeysOnRight.AddToList(monkey)
 		default:
 			if counter.Finished() {
-				wg.Wait()
+				quit <- true
+				quit <- true
+				passings.Wait()
 				log.Println("Finished after passing", counter.MinMonkeysGenerated, "monkeys")
 				return
 			}
 
-
 			var try sync.WaitGroup
 			try.Add(2)
+
 			go func() {
 				defer try.Done()
 				waitingRight := len(monkeysOnRight.GetList())
 
 				if waitingRight > 0 {
-					passed := bridge.Pass(&wg, RIGHT, waitingRight)
-					if passed {
-						monkeysOnRight.RemoveFromList(waitingRight)
-						counter.Increment(waitingRight)
-					}
+					bridge.PassLeft(&passings, RIGHT, waitingRight)
+
+					monkeysOnRight.RemoveFromList(waitingRight)
+					counter.Increment(waitingRight)
 				}
 			}()
 
@@ -81,11 +83,10 @@ func main()  {
 				waitingLeft := len(monkeysOnLeft.GetList())
 
 				if waitingLeft > 0 {
-					passed := bridge.Pass(&wg, LEFT, waitingLeft)
-					if passed {
-						monkeysOnLeft.RemoveFromList(waitingLeft)
-						counter.Increment(waitingLeft)
-					}
+					bridge.PassRight(&passings, LEFT, waitingLeft)
+
+					monkeysOnLeft.RemoveFromList(waitingLeft)
+					counter.Increment(waitingLeft)
 				}
 			}()
 
@@ -94,13 +95,18 @@ func main()  {
 	}
 }
 
-func generateMonkeys(monkeys chan<- Monkey, delay int) {
+func generateMonkeys(monkeys chan<- Monkey, delay int, quit <-chan bool) {
 	for  {
-		//Random sleep
-		rand.Seed(time.Now().UnixNano())
-		n := rand.Intn(3000) + delay
-		time.Sleep(time.Duration(n)*time.Millisecond)
+		select {
+		case <- quit:
+			return
+		default:
+			//Random sleep
+			rand.Seed(time.Now().UnixNano())
+			n := rand.Intn(3000) + delay
+			time.Sleep(time.Duration(n)*time.Millisecond)
 
-		monkeys <- true
+			monkeys <- true
+		}
 	}
 }

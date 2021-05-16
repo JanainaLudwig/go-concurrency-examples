@@ -9,60 +9,62 @@ import (
 type Direction int8
 
 const (
-	EMPTY = iota
-	LEFT
+	LEFT = iota
 	RIGHT
 )
 
 type Bridge struct {
 	mutex            sync.Mutex
 	TimeToCross      time.Duration
-	CurrentDirection Direction
-	PassingCount     int
 	Debug            bool
 	debugId          int
+	esquerda 		 sync.WaitGroup
+	direita 		 sync.WaitGroup
 }
 
-func (c *Bridge) Pass(wg *sync.WaitGroup, d Direction, qtd int) bool {
+func (c *Bridge) PassRight(wg *sync.WaitGroup, d Direction, qtd int) {
+	c.esquerda.Wait()
+
 	c.mutex.Lock()
-
-	if c.CurrentDirection != EMPTY && d != c.CurrentDirection {
-		c.mutex.Unlock()
-		return false
-	}
-
-	c.CurrentDirection = d
-	c.PassingCount++
-
 	c.debugId++
 	i := c.debugId
-
+	c.direita.Add(1)
 	c.mutex.Unlock()
+
+	log.Printf("[ %02d ] START %v (%v)", i, getDirection(d), qtd)
 
 	wg.Add(1)
 	go func() {
-		if c.Debug {
-			log.Printf("[ %02d ] START %v (%v)", i, getDirection(d), qtd)
-		}
+		defer c.direita.Done()
+		defer wg.Done()
 
 		time.Sleep(c.TimeToCross)
 
-		if c.Debug {
-			log.Printf("[ %02d ] END", i)
-		}
+		log.Printf("[ %02d ] END", i)
+	}()
+}
 
-		c.mutex.Lock()
-		c.PassingCount--
+func (c *Bridge) PassLeft(wg *sync.WaitGroup, d Direction, qtd int) {
+	c.direita.Wait()
 
-		if c.PassingCount == 0 {
-			c.CurrentDirection = EMPTY
-		}
+	c.mutex.Lock()
+	c.debugId++
+	i := c.debugId
+	c.esquerda.Add(1)
+	c.mutex.Unlock()
 
-		c.mutex.Unlock()
-		wg.Done()
+	log.Printf("[ %02d ] START %v (%v)", i, getDirection(d), qtd)
+
+	wg.Add(1)
+	go func() {
+		defer c.esquerda.Done()
+		defer wg.Done()
+
+		time.Sleep(c.TimeToCross)
+
+		log.Printf("[ %02d ] END", i)
 	}()
 
-	return true
 }
 
 func getDirection(d Direction) string {
