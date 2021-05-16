@@ -27,6 +27,7 @@ func (c *Counter) Finished() bool {
 }
 
 func main()  {
+	wg := sync.WaitGroup{}
 	leftChannel := make(chan Monkey, 10)
 	rightChannel := make(chan Monkey, 10)
 
@@ -34,7 +35,7 @@ func main()  {
 	monkeysOnRight := MonkeysList{}
 
 	counter := Counter{
-		MinMonkeysGenerated: 20,
+		MinMonkeysGenerated: 10,
 	}
 	bridge := Bridge{
 		TimeToCross: 1 * time.Second,
@@ -56,6 +57,7 @@ func main()  {
 			//log.Println("RIGHT", len(monkeysOnRight.GetList()))
 		default:
 			if counter.Finished() {
+				wg.Wait()
 				log.Println("Finished after passing", counter.MinMonkeysGenerated, "monkeys")
 				return
 			}
@@ -65,7 +67,7 @@ func main()  {
 
 
 			if waitingRight > 0 {
-				passed := bridge.Pass(RIGHT)
+				passed := bridge.Pass(&wg, RIGHT)
 				if passed {
 					log.Println(waitingRight, "  _ <- RIGHT")
 					monkeysOnRight.RemoveFromList(waitingRight)
@@ -74,7 +76,7 @@ func main()  {
 			}
 
 			if waitingLeft > 0 {
-				passed := bridge.Pass(LEFT)
+				passed := bridge.Pass(&wg, LEFT)
 				if passed {
 					log.Println(waitingLeft, "  LEFT -> _")
 					monkeysOnLeft.RemoveFromList(waitingLeft)
