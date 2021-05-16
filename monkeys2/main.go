@@ -28,8 +28,8 @@ func (c *Counter) Finished() bool {
 
 func main()  {
 	wg := sync.WaitGroup{}
-	leftChannel := make(chan Monkey, 10)
-	rightChannel := make(chan Monkey, 10)
+	leftChannel := make(chan Monkey, 5)
+	rightChannel := make(chan Monkey, 5)
 
 	monkeysOnLeft := MonkeysList{}
 	monkeysOnRight := MonkeysList{}
@@ -44,7 +44,7 @@ func main()  {
 
 	log.Println("Total: ", counter.MinMonkeysGenerated)
 
-	go generateMonkeys(leftChannel, 1000)
+	go generateMonkeys(leftChannel, 500)
 	go generateMonkeys(rightChannel, 1000)
 
 	for {
@@ -78,7 +78,6 @@ func main()  {
 					counter.Increment(waitingLeft)
 				}
 			}
-
 		}
 	}
 }

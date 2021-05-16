@@ -13,7 +13,7 @@ func main()  {
 	wg.Add(3)
 
 	go add(&wg, &data, 5)
-	go multiply(&wg, &data, 10)
+	go remove(&wg, &data, 10)
 	go add(&wg, &data, 10)
 
 	wg.Wait()
@@ -27,8 +27,8 @@ func add(wg *sync.WaitGroup, d *Data, value int) {
 	d.SetValue(d.GetValue() + value)
 }
 
-func multiply(wg *sync.WaitGroup, d *Data, value int) {
+func remove(wg *sync.WaitGroup, d *Data, value int) {
 	defer wg.Done()
 
-	d.SetValue(d.GetValue() * value)
+	d.SetValue(d.GetValue() - value)
 }

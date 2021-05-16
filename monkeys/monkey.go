@@ -1,23 +1,31 @@
 package main
 
-import "sync"
+import (
+	"sync"
+)
 
 type Monkey bool
 
-type Monkeys struct {
-	List []Monkey
-	mutex sync.Mutex
+type MonkeysList struct {
+	List      []Monkey
+	mutexList sync.Mutex
 }
 
-func (m *Monkeys) Get() []Monkey {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+func (m *MonkeysList) GetList() []Monkey {
+	m.mutexList.Lock()
+	defer m.mutexList.Unlock()
 
 	return m.List
 }
 
-func (m *Monkeys) Add()  {
-	m.mutex.Lock()
-	m.List = append(m.List, true)
-	m.mutex.Unlock()
+func (m *MonkeysList) AddToList(monkey Monkey)  {
+	m.mutexList.Lock()
+	m.List = append(m.List, monkey)
+	m.mutexList.Unlock()
+}
+
+func (m *MonkeysList) RemoveFromList(qtd int)  {
+	m.mutexList.Lock()
+	m.List = m.List[: len(m.List) - qtd]
+	m.mutexList.Unlock()
 }
