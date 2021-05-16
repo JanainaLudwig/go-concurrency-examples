@@ -67,7 +67,7 @@ func main()  {
 			if waitingRight > 0 {
 				passed := bridge.Pass(RIGHT)
 				if passed {
-					log.Println(waitingRight, "_ <- RIGHT")
+					log.Println(waitingRight, "  _ <- RIGHT")
 					monkeysOnRight.RemoveFromList(waitingRight)
 					counter.Increment(waitingRight)
 				}
@@ -76,7 +76,7 @@ func main()  {
 			if waitingLeft > 0 {
 				passed := bridge.Pass(LEFT)
 				if passed {
-					log.Println(waitingLeft, "LEFT -> _")
+					log.Println(waitingLeft, "  LEFT -> _")
 					monkeysOnLeft.RemoveFromList(waitingLeft)
 					counter.Increment(waitingLeft)
 				}
