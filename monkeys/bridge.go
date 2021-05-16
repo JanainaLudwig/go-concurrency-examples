@@ -23,7 +23,7 @@ type Bridge struct {
 	debugId          int
 }
 
-func (c *Bridge) Pass(wg *sync.WaitGroup, d Direction) bool {
+func (c *Bridge) Pass(wg *sync.WaitGroup, d Direction, qtd int) bool {
 	c.mutex.Lock()
 
 	if c.CurrentDirection != EMPTY && d != c.CurrentDirection {
@@ -42,7 +42,7 @@ func (c *Bridge) Pass(wg *sync.WaitGroup, d Direction) bool {
 	wg.Add(1)
 	go func() {
 		if c.Debug {
-			log.Printf("[ %02d ] START %v", i, getDirection(d))
+			log.Printf("[ %02d ] START %v (%v)", i, getDirection(d), qtd)
 		}
 
 		time.Sleep(c.TimeToCross)

@@ -38,7 +38,7 @@ func main()  {
 		MinMonkeysGenerated: 30,
 	}
 	bridge := Bridge{
-		TimeToCross: 1 * time.Second,
+		TimeToCross: 2 * time.Second,
 		Debug: true,
 	}
 
@@ -60,15 +60,15 @@ func main()  {
 				return
 			}
 
-			waitingRight := len(monkeysOnRight.GetList())
-			waitingLeft := len(monkeysOnLeft.GetList())
 
 			var try sync.WaitGroup
 			try.Add(2)
 			go func() {
 				defer try.Done()
+				waitingRight := len(monkeysOnRight.GetList())
+
 				if waitingRight > 0 {
-					passed := bridge.Pass(&wg, RIGHT)
+					passed := bridge.Pass(&wg, RIGHT, waitingRight)
 					if passed {
 						monkeysOnRight.RemoveFromList(waitingRight)
 						counter.Increment(waitingRight)
@@ -78,8 +78,10 @@ func main()  {
 
 			go func() {
 				defer try.Done()
+				waitingLeft := len(monkeysOnLeft.GetList())
+
 				if waitingLeft > 0 {
-					passed := bridge.Pass(&wg, LEFT)
+					passed := bridge.Pass(&wg, LEFT, waitingLeft)
 					if passed {
 						monkeysOnLeft.RemoveFromList(waitingLeft)
 						counter.Increment(waitingLeft)
