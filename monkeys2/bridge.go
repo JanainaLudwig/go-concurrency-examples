@@ -15,42 +15,49 @@ const (
 )
 
 type Bridge struct {
-	bridgeMutex sync.Mutex
-	directionMutex sync.Mutex
-	TimeToCross time.Duration
+	mutex            sync.Mutex
+	TimeToCross      time.Duration
 	CurrentDirection Direction
-	Debug bool
+	PassingCount     int
+	Debug            bool
+	debugId          int
 }
 
 func (c *Bridge) Pass(d Direction) bool {
-	c.directionMutex.Lock()
+	c.mutex.Lock()
 
-	//log.Println("Current", getDirection(c.CurrentDirection), "  Desired", getDirection(d))
 	if c.CurrentDirection != EMPTY && d != c.CurrentDirection {
-		c.directionMutex.Unlock()
+		c.mutex.Unlock()
 		return false
 	}
 
 	c.CurrentDirection = d
-	c.directionMutex.Unlock()
+	c.PassingCount++
 
-	c.bridgeMutex.Lock()
+	c.mutex.Unlock()
+
+	c.debugId++
+	i := c.debugId
+
 	go func() {
 		if c.Debug {
-			log.Println("crossing... ", getDirection(d))
+			log.Println("[", i , "]", "start", getDirection(d))
 		}
 
 		time.Sleep(c.TimeToCross)
 
 		if c.Debug {
-			log.Println("crossed...", getDirection(d))
+			log.Println("[", i , "]", "end", getDirection(d))
 		}
 
-		c.directionMutex.Lock()
-		c.CurrentDirection = EMPTY
-		c.directionMutex.Unlock()
+		c.mutex.Lock()
+		c.PassingCount--
 
-		c.bridgeMutex.Unlock()
+		if c.PassingCount == 0 {
+			c.CurrentDirection = EMPTY
+		}
+
+		c.mutex.Unlock()
 	}()
 
 	return true

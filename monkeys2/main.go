@@ -37,14 +37,14 @@ func main()  {
 		MinMonkeysGenerated: 20,
 	}
 	bridge := Bridge{
-		TimeToCross: 5 * time.Second,
-		Debug: false,
+		TimeToCross: 1 * time.Second,
+		Debug: true,
 	}
 
 	log.Println("Total: ", counter.MinMonkeysGenerated)
 
-	go generateMonkeys(leftChannel, 500)
-	go generateMonkeys(rightChannel, 300)
+	go generateMonkeys(leftChannel, 1000)
+	go generateMonkeys(rightChannel, 1000)
 
 	for {
 		select {
