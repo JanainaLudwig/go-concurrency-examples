@@ -9,8 +9,7 @@ import (
 type Direction int8
 
 const (
-	EMPTY = iota
-	LEFT
+	LEFT = iota
 	RIGHT
 )
 
