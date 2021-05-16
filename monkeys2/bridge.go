@@ -42,13 +42,13 @@ func (c *Bridge) Pass(wg *sync.WaitGroup, d Direction) bool {
 	wg.Add(1)
 	go func() {
 		if c.Debug {
-			log.Println("[", i , "]", "start", getDirection(d))
+			log.Printf("[ %02d ] START %v", i, getDirection(d))
 		}
 
 		time.Sleep(c.TimeToCross)
 
 		if c.Debug {
-			log.Println("[", i , "]", "end", getDirection(d))
+			log.Printf("[ %02d ] END", i)
 		}
 
 		c.mutex.Lock()
@@ -68,9 +68,9 @@ func (c *Bridge) Pass(wg *sync.WaitGroup, d Direction) bool {
 func getDirection(d Direction) string {
 	switch d {
 	case RIGHT:
-		return "Right"
+		return "____ <- Right"
 	case LEFT:
-		return "Left"
+		return "Left -> _____"
 	default:
 		return "Empty"
 	}

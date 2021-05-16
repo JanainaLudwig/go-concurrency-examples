@@ -35,7 +35,7 @@ func main()  {
 	monkeysOnRight := MonkeysList{}
 
 	counter := Counter{
-		MinMonkeysGenerated: 10,
+		MinMonkeysGenerated: 30,
 	}
 	bridge := Bridge{
 		TimeToCross: 1 * time.Second,
@@ -51,10 +51,8 @@ func main()  {
 		select {
 		case monkey := <-leftChannel: // Randomly add monkeys to the left side
 			monkeysOnLeft.AddToList(monkey)
-			//log.Println("LEFT", len(monkeysOnLeft.GetList()))
 		case monkey := <-rightChannel: // Randomly add monkeys to the right side
 			monkeysOnRight.AddToList(monkey)
-			//log.Println("RIGHT", len(monkeysOnRight.GetList()))
 		default:
 			if counter.Finished() {
 				wg.Wait()
@@ -65,11 +63,9 @@ func main()  {
 			waitingRight := len(monkeysOnRight.GetList())
 			waitingLeft := len(monkeysOnLeft.GetList())
 
-
 			if waitingRight > 0 {
 				passed := bridge.Pass(&wg, RIGHT)
 				if passed {
-					log.Println(waitingRight, "  _ <- RIGHT")
 					monkeysOnRight.RemoveFromList(waitingRight)
 					counter.Increment(waitingRight)
 				}
@@ -78,7 +74,6 @@ func main()  {
 			if waitingLeft > 0 {
 				passed := bridge.Pass(&wg, LEFT)
 				if passed {
-					log.Println(waitingLeft, "  LEFT -> _")
 					monkeysOnLeft.RemoveFromList(waitingLeft)
 					counter.Increment(waitingLeft)
 				}
